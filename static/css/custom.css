@@ -1,0 +1,26 @@
+/* ------- protectiON: estilos extra ------- */
+
+/* oscurece la tabla de la lista de alertas */
+.table thead {
+    background: #212529;
+    color: #f8f9fa;
+  }
+  
+  .table tbody tr:hover {
+    background: #f1f3f5;
+  }
+  
+  /* botón “Salir” en navbar */
+  .navbar .btn {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.9rem;
+  }
+  
+  /* contenedor del mapa */
+  #map {
+    height: 400px;
+    border: 2px solid #dee2e6;
+    border-radius: 0.5rem;
+  }
+  
+  

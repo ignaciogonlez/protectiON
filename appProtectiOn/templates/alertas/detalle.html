@@ -1,0 +1,17 @@
+{% extends 'alertas/base.html' %}
+{% block content %}
+<h1>Alerta {{ alerta.id }}</h1>
+<p class="text-muted">{{ alerta.timestamp }}</p>
+
+<div id="map"></div>
+
+<h3 class="mt-4">Audio</h3>
+<audio controls src="{{ alerta.audio.url }}"></audio>
+
+<script>
+  const map = L.map('map').setView([{{ alerta.lat }}, {{ alerta.lng }}], 17);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+              { attribution: '&copy; OpenStreetMap' }).addTo(map);
+  L.marker([{{ alerta.lat }}, {{ alerta.lng }}]).addTo(map);
+</script>
+{% endblock %}
