@@ -10,25 +10,35 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
+from urllib.parse import urlparse
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+# ─── SECURITY ────────────────────────────────────────────────────────────────
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-&u-$eak0!uyb(_$5pif3o-^^xpqtf@(dk2=ts(tcalyj8gnc+)'
+# Load environment variables from a local .env file (only in development)
+if os.path.exists(BASE_DIR / '.env'):
+    from dotenv import load_dotenv
+    load_dotenv()
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# SECRET_KEY should come from env for security
+SECRET_KEY = os.getenv(
+    'SECRET_KEY',
+    'django-insecure-&u-$eak0!uyb(_$5pif3o-^^xpqtf@(dk2=ts(tcalyj8gnc+)'  # fallback for local dev
+)
 
-ALLOWED_HOSTS = []
+# DEBUG mode flag
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
+
+# Hosts allowed to serve this app
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',') if os.getenv('ALLOWED_HOSTS') else []
 
 
-# Application definition
+# ─── APPLICATION DEFINITION ─────────────────────────────────────────────────
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -37,8 +47,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # third-party
     'rest_framework',
     'rest_framework.authtoken',
+
+    # local apps
     'appProtectiOn',
 ]
 
@@ -57,8 +71,9 @@ ROOT_URLCONF = 'protectiON.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        # look in <BASE_DIR>/templates first
+        'DIRS': [ BASE_DIR / 'templates' ],
         'APP_DIRS': True,
-        'DIRS': [],
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.request',
@@ -72,19 +87,30 @@ TEMPLATES = [
 WSGI_APPLICATION = 'protectiON.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+# ─── DATABASE CONFIGURATION ─────────────────────────────────────────────────
 
+# default to SQLite for local development
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME':   BASE_DIR / 'db.sqlite3',
     }
 }
 
+# override with Postgres when DATABASE_URL is set (e.g. in Render)
+if db_url := os.getenv('DATABASE_URL'):
+    parsed = urlparse(db_url)
+    DATABASES['default'] = {
+        'ENGINE':   'django.db.backends.postgresql',
+        'NAME':     parsed.path.lstrip('/'),
+        'USER':     parsed.username,
+        'PASSWORD': parsed.password,
+        'HOST':     parsed.hostname,
+        'PORT':     parsed.port,
+    }
 
-# Password validation
-# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
+
+# ─── PASSWORD VALIDATION ────────────────────────────────────────────────────
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -102,45 +128,40 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# Internationalization
-# https://docs.djangoproject.com/en/5.2/topics/i18n/
+# ─── INTERNATIONALIZATION ───────────────────────────────────────────────────
 
 LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC'
-
-USE_I18N = True
-
-USE_TZ = True
+TIME_ZONE     = 'UTC'
+USE_I18N      = True
+USE_TZ        = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
+# ─── STATIC & MEDIA FILES ───────────────────────────────────────────────────
 
-STATIC_URL = 'static/'
-STATICFILES_DIRS = [ BASE_DIR / 'static' ]
-STATIC_ROOT = BASE_DIR / 'staticfiles'     # para Render
-MEDIA_URL = 'media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+STATIC_URL        = 'static/'
+STATICFILES_DIRS  = [ BASE_DIR / 'static' ]
+STATIC_ROOT       = BASE_DIR / 'staticfiles'
+
+MEDIA_URL         = 'media/'
+MEDIA_ROOT        = BASE_DIR / 'media'
 
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
+# ─── DEFAULT PK FIELD TYPE ──────────────────────────────────────────────────
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# ─── DJANGO REST FRAMEWORK ──────────────────────────────────────────────────
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
-    ]
+    ],
 }
 
-# ────────────────────────────────────────────────
-# Después de DEFAULT_AUTO_FIELD y REST_FRAMEWORK…
 
-# URL adonde va tras login si no hay `next`
-LOGIN_REDIRECT_URL = 'home'     # usa el name="home" de tu urls.py
-# URL adonde va tras logout
+# ─── LOGIN / LOGOUT REDIRECTS ───────────────────────────────────────────────
+
+LOGIN_REDIRECT_URL  = 'home'
 LOGOUT_REDIRECT_URL = 'login'
-# ────────────────────────────────────────────────
