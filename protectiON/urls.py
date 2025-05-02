@@ -1,6 +1,7 @@
 # protectiON/urls.py
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path
+from django.contrib.auth import views as auth_views
 from rest_framework.authtoken import views as drf_views
 from appProtectiOn import views
 
@@ -10,8 +11,11 @@ urlpatterns = [
     # Registro de usuarios
     path('signup/', views.signup, name='signup'),
 
-    # Login / Logout / Cambio de contraseña (incluye password_change y password_change/done)
-    path('accounts/', include('django.contrib.auth.urls')),
+    # Login y logout explícitos (sin password_change)
+    path('accounts/login/', auth_views.LoginView.as_view(
+        template_name='registration/login.html'
+    ), name='login'),
+    path('accounts/logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
 
     # API REST
     path('api/token/', drf_views.obtain_auth_token, name='token'),
