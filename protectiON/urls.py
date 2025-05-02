@@ -10,7 +10,7 @@ urlpatterns = [
     # Registro de usuarios
     path('signup/', views.signup, name='signup'),
 
-    # Login / Logout
+    # Login / Logout / Cambio de contraseña (incluye password_change y password_change/done)
     path('accounts/', include('django.contrib.auth.urls')),
 
     # API REST

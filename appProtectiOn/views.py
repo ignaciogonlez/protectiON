@@ -5,13 +5,13 @@ from django.shortcuts import render, get_object_or_404, redirect
 from rest_framework.generics import ListCreateAPIView, RetrieveAPIView
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.authtoken.models import Token
 
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login as auth_login
 
 from .models import Alerta
 from .serializers import AlertaSerializer
-
 
 # ----------  VISTAS HTML para usuarios  ----------
 
@@ -22,7 +22,12 @@ def lista_alertas(request):
         .filter(usuario=request.user)
         .order_by('-timestamp')
     )
-    return render(request, 'alertas/lista.html', {'alertas': alertas})
+    # Obtener (o crear) token para este usuario
+    token_obj, _ = Token.objects.get_or_create(user=request.user)
+    return render(request, 'alertas/lista.html', {
+        'alertas': alertas,
+        'token': token_obj.key,
+    })
 
 
 @login_required

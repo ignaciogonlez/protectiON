@@ -1,18 +1,31 @@
 {% extends 'alertas/base.html' %}
 {% block content %}
-<h1 class="mb-4">Mis alertas</h1>
-<table class="table">
-  <thead><tr><th>Fecha y hora</th><th>Lat</th><th>Lng</th></tr></thead>
-  <tbody>
-    {% for a in alertas %}
-      <tr>
-        <td><a href="{% url 'alerta-detalle' a.pk %}">{{ a.timestamp }}</a></td>
-        <td>{{ a.lat }}</td>
-        <td>{{ a.lng }}</td>
-      </tr>
-    {% empty %}
-      <tr><td colspan="3">Sin alertas</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
+  <div class="mb-3">
+    <div class="alert alert-info">
+      <strong>Tu token de API:</strong>
+      <code>{{ token }}</code>
+    </div>
+  </div>
+
+  <h1 class="mb-4">Mis alertas</h1>
+  <table class="table">
+    <thead>
+      <tr><th>Fecha y hora</th><th>Lat</th><th>Lng</th></tr>
+    </thead>
+    <tbody>
+      {% for a in alertas %}
+        <tr>
+          <td>
+            <a href="{% url 'alerta-detalle' a.pk %}">
+              {{ a.timestamp }}
+            </a>
+          </td>
+          <td>{{ a.lat }}</td>
+          <td>{{ a.lng }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="3">Sin alertas</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
 {% endblock %}
