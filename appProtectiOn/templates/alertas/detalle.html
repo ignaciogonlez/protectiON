@@ -10,8 +10,8 @@
 <h2 class="mt-4">Ubicación</h2>
 <div id="map" style="height:400px;"></div>
 
-<!-- Volcamos la alerta (lat/lng) en JSON seguro -->
-{{ alerta|json_script:"alerta-data" }}
+<!-- Dict con lat/lng serializable -->
+{{ alerta_data|json_script:"alerta-data" }}
 
 <h2 class="mt-4">Audio</h2>
 <audio controls class="w-100">
@@ -20,19 +20,17 @@
 </audio>
 
 <script>
-  // Recuperamos el JSON generado por el filtro json_script
+  // Recuperamos el JSON con lat y lng
   const alerta = JSON.parse(document.getElementById('alerta-data').textContent);
 
-  // Creamos el mapa centrado en la ubicación de la alerta
+  // Mapa
   const map = L.map('map').setView([alerta.lat, alerta.lng], 16);
 
-  // Capa base OpenStreetMap
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  // Marcador
   L.marker([alerta.lat, alerta.lng]).addTo(map)
        .bindPopup(`Lat: ${alerta.lat.toFixed(6)}<br>Lng: ${alerta.lng.toFixed(6)}`)
        .openPopup();

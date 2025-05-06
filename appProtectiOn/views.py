@@ -1,17 +1,18 @@
 # appProtectiOn/views.py
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts        import render, get_object_or_404, redirect
 
-from rest_framework.generics import ListCreateAPIView, RetrieveAPIView
+from rest_framework.generics       import ListCreateAPIView, RetrieveAPIView
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions    import IsAuthenticated
 from rest_framework.authtoken.models import Token
 
 from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth import login as auth_login
+from django.contrib.auth       import login as auth_login
 
-from .models import Alerta
+from .models      import Alerta
 from .serializers import AlertaSerializer
+
 
 # ----------  VISTAS HTML para usuarios  ----------
 
@@ -22,11 +23,10 @@ def lista_alertas(request):
         .filter(usuario=request.user)
         .order_by('-timestamp')
     )
-    # Obtener (o crear) token para este usuario
     token_obj, _ = Token.objects.get_or_create(user=request.user)
     return render(request, 'alertas/lista.html', {
         'alertas': alertas,
-        'token': token_obj.key,
+        'token'  : token_obj.key,
     })
 
 
@@ -37,13 +37,20 @@ def detalle_alerta(request, pk):
         pk=pk,
         usuario=request.user
     )
-    return render(request, 'alertas/detalle.html', {'alerta': alerta})
+
+    # Solo los datos serializables que necesitamos en JS
+    alerta_data = {
+        "lat": float(alerta.lat),
+        "lng": float(alerta.lng),
+    }
+
+    return render(request, 'alertas/detalle.html', {
+        'alerta'     : alerta,
+        'alerta_data': alerta_data,
+    })
 
 
 def signup(request):
-    """
-    Registro de nuevos usuarios.
-    """
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
         if form.is_valid():
@@ -58,28 +65,23 @@ def signup(request):
 # ----------  VISTAS API REST para el ESP32  ----------
 
 class AlertaListCreate(ListCreateAPIView):
-    """
-    GET  -> lista de alertas propias (descendente)
-    POST -> crea alerta nueva (lat, lng, audio)
-    """
-    serializer_class        = AlertaSerializer
-    authentication_classes  = [TokenAuthentication]
-    permission_classes      = [IsAuthenticated]
+    serializer_class       = AlertaSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes     = [IsAuthenticated]
 
     def get_queryset(self):
-        return Alerta.objects.filter(usuario=self.request.user).order_by('-timestamp')
+        return Alerta.objects.filter(
+            usuario=self.request.user
+        ).order_by('-timestamp')
 
     def perform_create(self, serializer):
         serializer.save(usuario=self.request.user)
 
 
 class AlertaRetrieve(RetrieveAPIView):
-    """
-    GET /api/alertas/<pk>/  -> detalle JSON de UNA alerta
-    """
-    serializer_class        = AlertaSerializer
-    authentication_classes  = [TokenAuthentication]
-    permission_classes      = [IsAuthenticated]
+    serializer_class       = AlertaSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes     = [IsAuthenticated]
 
     def get_queryset(self):
         return Alerta.objects.filter(usuario=self.request.user)
