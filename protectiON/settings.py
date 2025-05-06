@@ -48,9 +48,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    # third-party
+    # third‑party
     'rest_framework',
     'rest_framework.authtoken',
+    'storages',              # <-- agregado para S3
 
     # local apps
     'appProtectiOn',
@@ -142,6 +143,7 @@ STATIC_URL        = 'static/'
 STATICFILES_DIRS  = [ BASE_DIR / 'static' ]
 STATIC_ROOT       = BASE_DIR / 'staticfiles'
 
+# En local seguirá usando MEDIA_ROOT, pero en producción apuntará a S3
 MEDIA_URL         = 'media/'
 MEDIA_ROOT        = BASE_DIR / 'media'
 
@@ -165,3 +167,29 @@ REST_FRAMEWORK = {
 
 LOGIN_REDIRECT_URL  = 'home'
 LOGOUT_REDIRECT_URL = 'login'
+
+
+# ─── AWS S3 STORAGE CONFIGURATION ──────────────────────────────────────────
+
+# Si configuras estas variables de entorno, Django usará S3 para FileField
+AWS_ACCESS_KEY_ID         = os.getenv('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY     = os.getenv('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME   = os.getenv('AWS_STORAGE_BUCKET_NAME')
+AWS_S3_REGION_NAME        = os.getenv('AWS_S3_REGION_NAME', 'eu-west-3')
+
+if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY and AWS_STORAGE_BUCKET_NAME:
+    # Usa django‑storages + boto3 para media
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+    # S3 URL limpio (no signed)
+    AWS_S3_SIGNATURE_VERSION = 's3v4'
+    AWS_QUERYSTRING_AUTH     = False
+    AWS_DEFAULT_ACL          = 'public-read'
+
+    # Reemplaza MEDIA_URL para que apunte a tu bucket
+    MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/'
+
+    # (Opcional) si también quieres servir estáticos desde S3:
+    # STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    # STATIC_URL = MEDIA_URL  # o separa en distinto bucket si prefieres
+
