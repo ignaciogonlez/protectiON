@@ -1,14 +1,16 @@
 {% extends "alertas/base.html" %}
-{% load static json_script %}
+{% load static %}
+
 {% block title %}Alerta {{ alerta.id }}{% endblock %}
 
 {% block content %}
 <h1 class="mb-3">Alerta {{ alerta.id }}</h1>
-<p class="text-muted">{{ alerta.timestamp|date:"M j, Y, P" }}</p>
+<p class="text-muted">{{ alerta.timestamp|date:"M j, Y, P" }}</p>
 
 <h2 class="mt-4">Ubicación</h2>
 <div id="map" style="height:400px;"></div>
 
+<!-- Volcamos la alerta (lat/lng) en JSON seguro -->
 {{ alerta|json_script:"alerta-data" }}
 
 <h2 class="mt-4">Audio</h2>
@@ -18,10 +20,10 @@
 </audio>
 
 <script>
-  // Obtenemos la alerta (lat & lng) desde el script embebido de Django
+  // Recuperamos el JSON generado por el filtro json_script
   const alerta = JSON.parse(document.getElementById('alerta-data').textContent);
 
-  // Creamos el mapa centrado en la posición de la alerta
+  // Creamos el mapa centrado en la ubicación de la alerta
   const map = L.map('map').setView([alerta.lat, alerta.lng], 16);
 
   // Capa base OpenStreetMap
@@ -30,7 +32,7 @@
       attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  // Marcador en la ubicación exacta
+  // Marcador
   L.marker([alerta.lat, alerta.lng]).addTo(map)
        .bindPopup(`Lat: ${alerta.lat.toFixed(6)}<br>Lng: ${alerta.lng.toFixed(6)}`)
        .openPopup();
