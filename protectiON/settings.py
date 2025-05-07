@@ -126,11 +126,10 @@ AWS_S3_REGION_NAME      = os.getenv('AWS_S3_REGION_NAME', 'eu-west-3')
 
 if all([AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME]):
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    STATICFILES_STORAGE  = 'storages.backends.s3boto3.S3Boto3Storage'  # opcional
 
     AWS_S3_SIGNATURE_VERSION = 's3v4'
     AWS_QUERYSTRING_AUTH     = False
     AWS_DEFAULT_ACL          = None           # bucket con ACLs deshabilitadas
 
-    MEDIA_URL  = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/'
-    STATIC_URL = MEDIA_URL  # si no quieres, comenta esta línea
+    MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/'
+
