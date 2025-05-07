@@ -13,6 +13,11 @@ from django.contrib.auth       import login as auth_login
 from .models      import Alerta
 from .serializers import AlertaSerializer
 
+from django.core.files.storage import default_storage
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 # ----------  VISTAS HTML para usuarios  ----------
 
@@ -75,6 +80,8 @@ class AlertaListCreate(ListCreateAPIView):
         ).order_by('-timestamp')
 
     def perform_create(self, serializer):
+        # ← Aquí, justo al entrar a guardar, comprobamos el storage usado:
+        logger.warning(">>> DEFAULT STORAGE = %s", default_storage.__class__)
         serializer.save(usuario=self.request.user)
 
 
