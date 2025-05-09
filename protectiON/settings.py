@@ -134,9 +134,7 @@ if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY and AWS_STORAGE_BUCKET_NAME:
     AWS_S3_FILE_OVERWRITE    = False
     AWS_QUERYSTRING_AUTH     = False
     AWS_DEFAULT_ACL          = "public-read"      # ← ¡ACL pública!
-    MEDIA_URL = (
-        f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/"
-    )
+   
 
 # ───────────────────────── DEBUG helper
 if DEBUG:
