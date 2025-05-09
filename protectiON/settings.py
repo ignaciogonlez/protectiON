@@ -1,7 +1,11 @@
+# settings.py
+
 """
 Django settings for protectiON project
 """
 import os
+import sys
+import logging
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -49,7 +53,7 @@ MIDDLEWARE = [
 ]
 
 # ───────────────────────── URLS / WSGI
-ROOT_URLCONF  = "protectiON.urls"
+ROOT_URLCONF     = "protectiON.urls"
 WSGI_APPLICATION = "protectiON.wsgi.application"
 
 TEMPLATES = [{
@@ -94,17 +98,15 @@ AUTH_PASSWORD_VALIDATORS = [
 # ───────────────────────── I18N
 LANGUAGE_CODE = "es"
 TIME_ZONE     = "Europe/Madrid"
-USE_I18N = True
-USE_TZ   = True
+USE_I18N      = True
+USE_TZ        = True
 
 # ───────────────────────── STATIC / MEDIA (local por defecto)
-STATIC_URL  = "static/"
-STATICFILES_DIRS = [BASE_DIR / "static"]
-STATIC_ROOT = BASE_DIR / "staticfiles"
-
-MEDIA_URL  = "media/"
-MEDIA_ROOT = BASE_DIR / "media"
-
+STATIC_URL         = "static/"
+STATICFILES_DIRS   = [BASE_DIR / "static"]
+STATIC_ROOT        = BASE_DIR / "staticfiles"
+MEDIA_URL          = "media/"
+MEDIA_ROOT         = BASE_DIR / "media"
 STATICFILES_STORAGE = (
     "whitenoise.storage.CompressedManifestStaticFilesStorage"
 )
@@ -132,10 +134,10 @@ print("S3-ENV:",
       AWS_STORAGE_BUCKET_NAME)
 
 if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY and AWS_STORAGE_BUCKET_NAME:
-    DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-    AWS_QUERYSTRING_AUTH = False    # URLs limpias
-    AWS_DEFAULT_ACL      = None     # bucket-owner-enforced
-    MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/"
+    DEFAULT_FILE_STORAGE  = "storages.backends.s3boto3.S3Boto3Storage"
+    AWS_QUERYSTRING_AUTH  = False    # URLs limpias
+    AWS_DEFAULT_ACL       = None     # bucket-owner-enforced
+    MEDIA_URL             = f"https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/"
 
 # ───────────────────────── DEBUG helper
 if DEBUG:
@@ -149,9 +151,41 @@ if not DEBUG:
         _probe = S3Boto3Storage()                 # fuerza conexión
         print("✓ S3Boto3Storage inicializado. Bucket:", _probe.bucket_name)
     except Exception as e:
-        import traceback, sys
-        print("✗ ERROR INICIALIZANDO S3Boto3Storage:", e, file=sys.stderr)
+        import traceback, sys as _sys
+        print("✗ ERROR INICIALIZANDO S3Boto3Storage:", e, file=_sys.stderr)
         traceback.print_exc()
+
+# ───────────────────────── LOGGING para boto3 / storages
+logging.basicConfig(
+    level="DEBUG",
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
+)
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {"class": "logging.StreamHandler"},
+    },
+    "loggers": {
+        "boto3": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "botocore": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "storages.backends.s3boto3": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+    },
+}
 
 # ───────────────────────── OTHER
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

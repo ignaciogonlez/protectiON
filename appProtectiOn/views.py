@@ -1,4 +1,5 @@
 # appProtectiOn/views.py
+
 import logging
 
 from django.contrib.auth.decorators import login_required
@@ -10,7 +11,7 @@ from django.shortcuts               import render, get_object_or_404, redirect
 from rest_framework.generics       import ListCreateAPIView, RetrieveAPIView
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions    import IsAuthenticated
-from rest_framework.parsers        import MultiPartParser, FormParser      # 👈 NUEVO
+from rest_framework.parsers        import MultiPartParser, FormParser
 from rest_framework.authtoken.models import Token
 
 from django.core.files.uploadedfile import UploadedFile
@@ -46,7 +47,6 @@ def detalle_alerta(request, pk):
         usuario=request.user
     )
 
-    # Solo los datos serializables que necesitamos en JS
     alerta_data = {
         "lat": float(alerta.lat),
         "lng": float(alerta.lng),
@@ -83,9 +83,7 @@ class AlertaListCreate(ListCreateAPIView):
     serializer_class       = AlertaSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes     = [IsAuthenticated]
-    parser_classes         = [MultiPartParser, FormParser]      # 👈 NUEVO
-
-    # ---------- consultas ----------
+    parser_classes         = [MultiPartParser, FormParser]
 
     def get_queryset(self):
         return (
@@ -94,12 +92,10 @@ class AlertaListCreate(ListCreateAPIView):
             .order_by('-timestamp')
         )
 
-    # ---------- creación ----------
-
-    # appProtectiOn/views.py  (solo cambio en perform_create)
     def perform_create(self, serializer):
         audio = self.request.FILES.get("audio")
 
+        # estos print irán a stdout y se verán en Application Logs
         print("FILES keys =", list(self.request.FILES.keys()), flush=True)
         print(
             "audio:",
@@ -114,8 +110,10 @@ class AlertaListCreate(ListCreateAPIView):
             flush=True,
         )
 
-        serializer.save(usuario=self.request.user)
+        alerta = serializer.save(usuario=self.request.user)
 
+        # opcional: imprimir la URL resultante en S3
+        print("S3 URL =", alerta.audio.url, flush=True)
 
 
 class AlertaRetrieve(RetrieveAPIView):
