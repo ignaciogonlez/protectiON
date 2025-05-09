@@ -69,6 +69,8 @@ def signup(request):
 
 # ----------  VISTAS API REST para el ESP32  ----------
 
+from django.core.files.uploadedfile import UploadedFile
+
 class AlertaListCreate(ListCreateAPIView):
     serializer_class       = AlertaSerializer
     authentication_classes = [TokenAuthentication]
@@ -80,9 +82,17 @@ class AlertaListCreate(ListCreateAPIView):
         ).order_by('-timestamp')
 
     def perform_create(self, serializer):
-        # ← Aquí, justo al entrar a guardar, comprobamos el storage usado:
-        logger.warning(">>> DEFAULT STORAGE = %s", default_storage.__class__)
+        # ← IMPORTANTE: estas tres líneas deben ir
+        #     a 4 espacios de indent dentro del método
+        logger.warning("FILES keys: %s", list(self.request.FILES.keys()))
+        logger.warning(
+            "audio?: %s",
+            isinstance(self.request.FILES.get("audio"), UploadedFile)
+        )
+        logger.warning("storage: %s", default_storage.__class__)
+
         serializer.save(usuario=self.request.user)
+
 
 
 class AlertaRetrieve(RetrieveAPIView):
