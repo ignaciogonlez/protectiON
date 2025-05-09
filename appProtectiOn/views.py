@@ -96,28 +96,26 @@ class AlertaListCreate(ListCreateAPIView):
 
     # ---------- creación ----------
 
+    # appProtectiOn/views.py  (solo cambio en perform_create)
     def perform_create(self, serializer):
-        """
-        Antes de guardar, mostramos en los logs qué llega exactamente
-        en request.FILES y en request.data.
-        """
         audio = self.request.FILES.get("audio")
 
-        logger.warning("FILES keys       = %s", list(self.request.FILES.keys()))
-        logger.warning(
-            "audio es UploadedFile? %s  |  name=%s  |  size=%s",
-            isinstance(audio, UploadedFile),
+        print("FILES keys =", list(self.request.FILES.keys()), flush=True)
+        print(
+            "audio:",
             getattr(audio, "name", None),
+            "size:",
             getattr(audio, "size", None),
+            flush=True,
         )
-        logger.warning(
-            "DATA lat=%s  lng=%s",
-            self.request.data.get("lat"),
-            self.request.data.get("lng"),
+        print(
+            "DATA lat=", self.request.data.get("lat"),
+            "lng=", self.request.data.get("lng"),
+            flush=True,
         )
-        logger.warning("DEFAULT_STORAGE  = %s", default_storage.__class__)
 
         serializer.save(usuario=self.request.user)
+
 
 
 class AlertaRetrieve(RetrieveAPIView):
