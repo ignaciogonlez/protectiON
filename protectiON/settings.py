@@ -119,10 +119,12 @@ AUTH_PASSWORD_VALIDATORS = [
 # ────────────────────────────────────────────
 #  INTERNACIONALIZACIÓN
 # ────────────────────────────────────────────
-LANGUAGE_CODE = "en-us"
-TIME_ZONE = "UTC"
+LANGUAGE_CODE = "es"               # opcional, si quieres las fechas en castellano
+TIME_ZONE     = "Europe/Madrid"    # tu zona
 USE_I18N = True
 USE_TZ = True
+
+
 
 # ────────────────────────────────────────────
 #  ARCHIVOS ESTÁTICOS / MEDIA (local por defecto)
