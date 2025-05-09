@@ -13,7 +13,7 @@ if (BASE_DIR / ".env").exists():
     load_dotenv()
 
 # ───────────────────────── SEGURIDAD
-SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-DEV-ONLY")
+SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-¡SOLO-PARA-DESARROLLO!")
 DEBUG      = os.getenv("DEBUG", "True") == "True"
 ALLOWED_HOSTS = (
     os.getenv("ALLOWED_HOSTS", "").split(",") if os.getenv("ALLOWED_HOSTS") else []
@@ -21,7 +21,7 @@ ALLOWED_HOSTS = (
 
 # ───────────────────────── APPS
 INSTALLED_APPS = [
-    # Django
+    # Django core
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -31,7 +31,7 @@ INSTALLED_APPS = [
     # 3rd-party
     "rest_framework",
     "rest_framework.authtoken",
-    "storages",          # S3
+    "storages",          # S3 backend
     # Local
     "appProtectiOn.apps.AppProtectiOnConfig",
 ]
@@ -39,7 +39,7 @@ INSTALLED_APPS = [
 # ───────────────────────── MIDDLEWARE
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # inmediatamente después
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # justo después
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -65,7 +65,7 @@ TEMPLATES = [{
     },
 }]
 
-# ───────────────────────── BD
+# ───────────────────────── DATABASE
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
@@ -97,7 +97,7 @@ TIME_ZONE     = "Europe/Madrid"
 USE_I18N = True
 USE_TZ   = True
 
-# ───────────────────────── STATIC / MEDIA
+# ───────────────────────── STATIC / MEDIA (local por defecto)
 STATIC_URL  = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
@@ -133,14 +133,25 @@ print("S3-ENV:",
 
 if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY and AWS_STORAGE_BUCKET_NAME:
     DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-    AWS_QUERYSTRING_AUTH = False     # URLs limpias
-    AWS_DEFAULT_ACL      = None      # bucket owner enforced
+    AWS_QUERYSTRING_AUTH = False    # URLs limpias
+    AWS_DEFAULT_ACL      = None     # bucket-owner-enforced
     MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/"
 
 # ───────────────────────── DEBUG helper
 if DEBUG:
     from django.core.files.storage import default_storage
     print(">>> DEFAULT STORAGE =", default_storage.__class__)
+
+# ───────────────────────── S3 DEBUG (si no es DEBUG)
+if not DEBUG:
+    try:
+        from storages.backends.s3boto3 import S3Boto3Storage
+        _probe = S3Boto3Storage()                 # fuerza conexión
+        print("✓ S3Boto3Storage inicializado. Bucket:", _probe.bucket_name)
+    except Exception as e:
+        import traceback, sys
+        print("✗ ERROR INICIALIZANDO S3Boto3Storage:", e, file=sys.stderr)
+        traceback.print_exc()
 
 # ───────────────────────── OTHER
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
