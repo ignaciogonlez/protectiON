@@ -1,25 +1,28 @@
 # appProtectiOn/views.py
+import logging
+
 from django.contrib.auth.decorators import login_required
-from django.shortcuts        import render, get_object_or_404, redirect
+from django.contrib.auth.forms      import UserCreationForm
+from django.contrib.auth            import login as auth_login
+from django.core.files.storage      import default_storage
+from django.shortcuts               import render, get_object_or_404, redirect
 
 from rest_framework.generics       import ListCreateAPIView, RetrieveAPIView
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions    import IsAuthenticated
+from rest_framework.parsers        import MultiPartParser, FormParser      # 👈 NUEVO
 from rest_framework.authtoken.models import Token
 
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth       import login as auth_login
+from django.core.files.uploadedfile import UploadedFile
 
 from .models      import Alerta
 from .serializers import AlertaSerializer
 
-from django.core.files.storage import default_storage
-import logging
-
 logger = logging.getLogger(__name__)
 
-
-# ----------  VISTAS HTML para usuarios  ----------
+# ------------------------------------------------------------------
+#                VISTAS HTML PARA USUARIOS (web)
+# ------------------------------------------------------------------
 
 @login_required
 def lista_alertas(request):
@@ -43,7 +46,7 @@ def detalle_alerta(request, pk):
         usuario=request.user
     )
 
-    # Solo los datos serializables que necesitamos en JS
+    # Solo los datos serializables que necesitamos en JS
     alerta_data = {
         "lat": float(alerta.lat),
         "lng": float(alerta.lng),
@@ -67,35 +70,60 @@ def signup(request):
     return render(request, 'registration/signup.html', {'form': form})
 
 
-# ----------  VISTAS API REST para el ESP32  ----------
-
-from django.core.files.uploadedfile import UploadedFile
+# ------------------------------------------------------------------
+#                VISTAS API REST PARA EL ESP32
+# ------------------------------------------------------------------
 
 class AlertaListCreate(ListCreateAPIView):
+    """
+    Endpoint que recibe alertas desde el ESP32.
+    Añadimos MultiPartParser / FormParser para asegurar que DRF trate
+    la petición como multipart y podamos inspeccionar request.FILES.
+    """
     serializer_class       = AlertaSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes     = [IsAuthenticated]
+    parser_classes         = [MultiPartParser, FormParser]      # 👈 NUEVO
+
+    # ---------- consultas ----------
 
     def get_queryset(self):
-        return Alerta.objects.filter(
-            usuario=self.request.user
-        ).order_by('-timestamp')
+        return (
+            Alerta.objects
+            .filter(usuario=self.request.user)
+            .order_by('-timestamp')
+        )
+
+    # ---------- creación ----------
 
     def perform_create(self, serializer):
-        # ← IMPORTANTE: estas tres líneas deben ir
-        #     a 4 espacios de indent dentro del método
-        logger.warning("FILES keys: %s", list(self.request.FILES.keys()))
+        """
+        Antes de guardar, mostramos en los logs qué llega exactamente
+        en request.FILES y en request.data.
+        """
+        audio = self.request.FILES.get("audio")
+
+        logger.warning("FILES keys       = %s", list(self.request.FILES.keys()))
         logger.warning(
-            "audio?: %s",
-            isinstance(self.request.FILES.get("audio"), UploadedFile)
+            "audio es UploadedFile? %s  |  name=%s  |  size=%s",
+            isinstance(audio, UploadedFile),
+            getattr(audio, "name", None),
+            getattr(audio, "size", None),
         )
-        logger.warning("storage: %s", default_storage.__class__)
+        logger.warning(
+            "DATA lat=%s  lng=%s",
+            self.request.data.get("lat"),
+            self.request.data.get("lng"),
+        )
+        logger.warning("DEFAULT_STORAGE  = %s", default_storage.__class__)
 
         serializer.save(usuario=self.request.user)
 
 
-
 class AlertaRetrieve(RetrieveAPIView):
+    """
+    Obtiene una alerta concreta.
+    """
     serializer_class       = AlertaSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes     = [IsAuthenticated]
