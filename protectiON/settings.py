@@ -1,5 +1,4 @@
 # settings.py
-
 """
 Django settings for protectiON project
 """
@@ -11,17 +10,14 @@ from urllib.parse import urlparse
 
 # ───────────────────────── BASE
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 if (BASE_DIR / ".env").exists():
     from dotenv import load_dotenv
     load_dotenv()
 
 # ───────────────────────── SEGURIDAD
-SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-¡SOLO-PARA-DESARROLLO!")
-DEBUG      = os.getenv("DEBUG", "True") == "True"
-ALLOWED_HOSTS = (
-    os.getenv("ALLOWED_HOSTS", "").split(",") if os.getenv("ALLOWED_HOSTS") else []
-)
+SECRET_KEY      = os.getenv("SECRET_KEY", "django-insecure-¡SOLO-PARA-DESARROLLO!")
+DEBUG           = os.getenv("DEBUG", "True") == "True"
+ALLOWED_HOSTS   = os.getenv("ALLOWED_HOSTS", "").split(",") if os.getenv("ALLOWED_HOSTS") else []
 
 # ───────────────────────── APPS
 INSTALLED_APPS = [
@@ -35,7 +31,7 @@ INSTALLED_APPS = [
     # 3rd-party
     "rest_framework",
     "rest_framework.authtoken",
-    "storages",          # S3 backend
+    "storages",            # S3 backend
     # Local
     "appProtectiOn.apps.AppProtectiOnConfig",
 ]
@@ -43,7 +39,7 @@ INSTALLED_APPS = [
 # ───────────────────────── MIDDLEWARE
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # justo después
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -102,14 +98,12 @@ USE_I18N      = True
 USE_TZ        = True
 
 # ───────────────────────── STATIC / MEDIA (local por defecto)
-STATIC_URL         = "static/"
-STATICFILES_DIRS   = [BASE_DIR / "static"]
-STATIC_ROOT        = BASE_DIR / "staticfiles"
-MEDIA_URL          = "media/"
-MEDIA_ROOT         = BASE_DIR / "media"
-STATICFILES_STORAGE = (
-    "whitenoise.storage.CompressedManifestStaticFilesStorage"
-)
+STATIC_URL        = "static/"
+STATICFILES_DIRS  = [BASE_DIR / "static"]
+STATIC_ROOT       = BASE_DIR / "staticfiles"
+MEDIA_URL         = "media/"
+MEDIA_ROOT        = BASE_DIR / "media"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # ───────────────────────── DRF
 REST_FRAMEWORK = {
@@ -118,7 +112,6 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
     ]
 }
-
 LOGIN_REDIRECT_URL  = "home"
 LOGOUT_REDIRECT_URL = "login"
 
@@ -128,16 +121,22 @@ AWS_SECRET_ACCESS_KEY   = os.getenv("AWS_SECRET_ACCESS_KEY")
 AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
 AWS_S3_REGION_NAME      = os.getenv("AWS_S3_REGION_NAME", "eu-west-3")
 
-print("S3-ENV:",
-      AWS_ACCESS_KEY_ID[:4] if AWS_ACCESS_KEY_ID else None,
-      AWS_SECRET_ACCESS_KEY[:4] if AWS_SECRET_ACCESS_KEY else None,
-      AWS_STORAGE_BUCKET_NAME)
+print(
+    "S3-ENV:",
+    AWS_ACCESS_KEY_ID[:4] if AWS_ACCESS_KEY_ID else None,
+    AWS_SECRET_ACCESS_KEY[:4] if AWS_SECRET_ACCESS_KEY else None,
+    AWS_STORAGE_BUCKET_NAME,
+)
 
 if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY and AWS_STORAGE_BUCKET_NAME:
-    DEFAULT_FILE_STORAGE  = "storages.backends.s3boto3.S3Boto3Storage"
-    AWS_QUERYSTRING_AUTH  = False    # URLs limpias
-    AWS_DEFAULT_ACL       = None     # bucket-owner-enforced
-    MEDIA_URL             = f"https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/"
+    DEFAULT_FILE_STORAGE     = "storages.backends.s3boto3.S3Boto3Storage"
+    AWS_S3_ADDRESSING_STYLE  = "virtual"
+    AWS_S3_FILE_OVERWRITE    = False
+    AWS_QUERYSTRING_AUTH     = False
+    AWS_DEFAULT_ACL          = "public-read"      # ← ¡ACL pública!
+    MEDIA_URL = (
+        f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/"
+    )
 
 # ───────────────────────── DEBUG helper
 if DEBUG:
@@ -148,42 +147,27 @@ if DEBUG:
 if not DEBUG:
     try:
         from storages.backends.s3boto3 import S3Boto3Storage
-        _probe = S3Boto3Storage()                 # fuerza conexión
+        _probe = S3Boto3Storage()
         print("✓ S3Boto3Storage inicializado. Bucket:", _probe.bucket_name)
     except Exception as e:
-        import traceback, sys as _sys
-        print("✗ ERROR INICIALIZANDO S3Boto3Storage:", e, file=_sys.stderr)
+        import traceback
+        print("✗ ERROR INICIALIZANDO S3Boto3Storage:", e, file=sys.stderr)
         traceback.print_exc()
 
-# ───────────────────────── LOGGING para boto3 / storages
+# ───────────────────────── LOGGING boto3 / storages
 logging.basicConfig(
     level="DEBUG",
     format="%(asctime)s %(levelname)s %(name)s %(message)s",
     handlers=[logging.StreamHandler(sys.stdout)],
 )
-
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "handlers": {
-        "console": {"class": "logging.StreamHandler"},
-    },
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
     "loggers": {
-        "boto3": {
-            "handlers": ["console"],
-            "level": "DEBUG",
-            "propagate": False,
-        },
-        "botocore": {
-            "handlers": ["console"],
-            "level": "DEBUG",
-            "propagate": False,
-        },
-        "storages.backends.s3boto3": {
-            "handlers": ["console"],
-            "level": "DEBUG",
-            "propagate": False,
-        },
+        "boto3":                  {"handlers": ["console"], "level": "DEBUG", "propagate": False},
+        "botocore":               {"handlers": ["console"], "level": "DEBUG", "propagate": False},
+        "storages.backends.s3boto3": {"handlers": ["console"], "level": "DEBUG", "propagate": False},
     },
 }
 
