@@ -12,6 +12,13 @@ from rest_framework.permissions    import IsAuthenticated
 from rest_framework.parsers        import MultiPartParser, FormParser
 from rest_framework.authtoken.models import Token
 
+# Sólo para depuración → /api/test-s3/
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from django.core.files.storage import default_storage
+import uuid, logging
+
 from .models      import Alerta
 from .serializers import AlertaSerializer
 
@@ -115,3 +122,23 @@ class AlertaRetrieve(RetrieveAPIView):
 
     def get_queryset(self):
         return Alerta.objects.filter(usuario=self.request.user)
+
+
+class TestS3Upload(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if "audio" not in request.FILES:
+            return Response({"error": "falta audio"}, status=400)
+
+        audio = request.FILES["audio"]          # InMemoryUploadedFile
+        name  = f"debug/{uuid.uuid4()}.wav"     # ruta reconocible
+
+        logger.warning(">>> STORAGE = %s", default_storage.__class__)
+        logger.warning(">>> MEDIA_URL = %s",        getattr(settings, "MEDIA_URL", "?"))
+        logger.warning(">>> saving %s  (%d bytes)", name, audio.size)
+
+        saved_path = default_storage.save(name, audio)  # <-- subida directa
+        url        = default_storage.url(saved_path)
+
+        return Response({"saved_path": saved_path, "url": url})

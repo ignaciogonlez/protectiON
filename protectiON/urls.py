@@ -32,6 +32,8 @@ urlpatterns = [
     path('', views.lista_alertas, name='home'),
     path('alertas/<int:pk>/', views.detalle_alerta,
          name='alerta-detalle'),
+     
+     path("api/test-s3/", views.TestS3Upload.as_view(), name="test-s3"),
 ]
 
 # --- SOLO EN DESARROLLO: sirve /media/ sólo si DEBUG=True ---
