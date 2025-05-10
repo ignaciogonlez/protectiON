@@ -14,6 +14,7 @@ from rest_framework.authtoken.models import Token
 
 # Sólo para depuración → /api/test-s3/
 from rest_framework.views import APIView
+from django.conf import settings 
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.core.files.storage import default_storage
