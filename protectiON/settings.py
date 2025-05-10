@@ -33,6 +33,11 @@ SECRET_KEY    = os.getenv("SECRET_KEY", "django-insecure-¡SOLO-PARA-DESARROLLO!
 DEBUG         = os.getenv("DEBUG", "True") == "True"
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",") if os.getenv("ALLOWED_HOSTS") else []
 
+if DEBUG:
+    # durante el desarrollo local permitimos también tu IP LAN
+    ALLOWED_HOSTS += ["127.0.0.1", "localhost", "192.168.1.130"]
+
+
 # ───────────────────────── APPS
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -156,3 +161,9 @@ if not DEBUG and "DEFAULT_FILE_STORAGE" in globals():
 
 # ───────────────────────── AUTO FIELD
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# dónde guardar los ficheros subidos
+MEDIA_ROOT = BASE_DIR / "media"
+# cómo se construirán las URLs
+MEDIA_URL  = "/media/"
