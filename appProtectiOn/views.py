@@ -1,11 +1,9 @@
 # appProtectiOn/views.py
-
 import logging
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms      import UserCreationForm
 from django.contrib.auth            import login as auth_login
-from django.core.files.storage      import default_storage
 from django.shortcuts               import render, get_object_or_404, redirect
 
 from rest_framework.generics       import ListCreateAPIView, RetrieveAPIView
@@ -14,15 +12,13 @@ from rest_framework.permissions    import IsAuthenticated
 from rest_framework.parsers        import MultiPartParser, FormParser
 from rest_framework.authtoken.models import Token
 
-from django.core.files.uploadedfile import UploadedFile
-
 from .models      import Alerta
 from .serializers import AlertaSerializer
 
 logger = logging.getLogger(__name__)
 
 # ------------------------------------------------------------------
-#                VISTAS HTML PARA USUARIOS (web)
+#                VISTAS HTML
 # ------------------------------------------------------------------
 
 @login_required
@@ -46,14 +42,9 @@ def detalle_alerta(request, pk):
         pk=pk,
         usuario=request.user
     )
-
-    alerta_data = {
-        "lat": float(alerta.lat),
-        "lng": float(alerta.lng),
-    }
-
+    alerta_data = {"lat": float(alerta.lat), "lng": float(alerta.lng)}
     return render(request, 'alertas/detalle.html', {
-        'alerta'     : alerta,
+        'alerta': alerta,
         'alerta_data': alerta_data,
     })
 
@@ -69,16 +60,13 @@ def signup(request):
         form = UserCreationForm()
     return render(request, 'registration/signup.html', {'form': form})
 
-
 # ------------------------------------------------------------------
-#                VISTAS API REST PARA EL ESP32
+#                API REST para ESP32
 # ------------------------------------------------------------------
 
 class AlertaListCreate(ListCreateAPIView):
     """
-    Endpoint que recibe alertas desde el ESP32.
-    Añadimos MultiPartParser / FormParser para asegurar que DRF trate
-    la petición como multipart y podamos inspeccionar request.FILES.
+    Endpoint que recibe alertas (multipart) desde el ESP32.
     """
     serializer_class       = AlertaSerializer
     authentication_classes = [TokenAuthentication]
@@ -93,19 +81,20 @@ class AlertaListCreate(ListCreateAPIView):
         )
 
     def perform_create(self, serializer):
+        # Import aquí → se evalúa con settings ya cargados
         from django.core.files.storage import default_storage
         import warnings
-        warnings.warn(f"STORAGE EN RUNTIME -> {default_storage.__class__}")
+        warnings.warn(
+            f"STORAGE EN RUNTIME -> {default_storage.__class__}",
+            RuntimeWarning,
+        )
 
         audio = self.request.FILES.get("audio")
 
-        # estos print irán a stdout y se verán en Application Logs
         print("FILES keys =", list(self.request.FILES.keys()), flush=True)
         print(
-            "audio:",
-            getattr(audio, "name", None),
-            "size:",
-            getattr(audio, "size", None),
+            "audio:", getattr(audio, "name", None),
+            "size:", getattr(audio, "size", None),
             flush=True,
         )
         print(
@@ -116,14 +105,10 @@ class AlertaListCreate(ListCreateAPIView):
 
         alerta = serializer.save(usuario=self.request.user)
 
-        # opcional: imprimir la URL resultante en S3
         print("S3 URL =", alerta.audio.url, flush=True)
 
 
 class AlertaRetrieve(RetrieveAPIView):
-    """
-    Obtiene una alerta concreta.
-    """
     serializer_class       = AlertaSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes     = [IsAuthenticated]
