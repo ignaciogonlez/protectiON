@@ -37,7 +37,6 @@ if DEBUG:
     # durante el desarrollo local permitimos también tu IP LAN
     ALLOWED_HOSTS += ["127.0.0.1", "localhost", "192.168.1.130"]
 
-
 # ───────────────────────── APPS
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -91,12 +90,12 @@ DATABASES = {
 if (db := os.getenv("DATABASE_URL")):
     p = urlparse(db)
     DATABASES["default"] = {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": p.path.lstrip("/"),
-        "USER": p.username,
+        "ENGINE":   "django.db.backends.postgresql",
+        "NAME":     p.path.lstrip("/"),
+        "USER":     p.username,
         "PASSWORD": p.password,
-        "HOST": p.hostname,
-        "PORT": p.port,
+        "HOST":     p.hostname,
+        "PORT":     p.port,
     }
 
 # ───────────────────────── PASSWORDS
@@ -114,12 +113,15 @@ USE_I18N      = True
 USE_TZ        = True
 
 # ───────────────────────── STATIC / MEDIA (local fall-back)
-STATIC_URL          = "static/"
-STATICFILES_DIRS    = [BASE_DIR / "static"]
-STATIC_ROOT         = BASE_DIR / "staticfiles"
-MEDIA_URL           = MEDIA_URL if "MEDIA_URL" in globals() else "media/"
-MEDIA_ROOT          = BASE_DIR / "media"
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STATIC_URL            = "static/"
+STATICFILES_DIRS      = [BASE_DIR / "static"]
+STATIC_ROOT           = BASE_DIR / "staticfiles"
+STATICFILES_STORAGE   = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+# Si no estamos usando S3, definimos MEDIA locales
+if "DEFAULT_FILE_STORAGE" not in globals():
+    MEDIA_URL  = "/media/"
+    MEDIA_ROOT = BASE_DIR / "media"
 
 # ───────────────────────── DRF
 REST_FRAMEWORK = {
@@ -161,9 +163,3 @@ if not DEBUG and "DEFAULT_FILE_STORAGE" in globals():
 
 # ───────────────────────── AUTO FIELD
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-
-# dónde guardar los ficheros subidos
-MEDIA_ROOT = BASE_DIR / "media"
-# cómo se construirán las URLs
-MEDIA_URL  = "/media/"
