@@ -93,6 +93,10 @@ class AlertaListCreate(ListCreateAPIView):
         )
 
     def perform_create(self, serializer):
+        from django.core.files.storage import default_storage
+        import warnings
+        warnings.warn(f"STORAGE EN RUNTIME -> {default_storage.__class__}")
+
         audio = self.request.FILES.get("audio")
 
         # estos print irán a stdout y se verán en Application Logs
